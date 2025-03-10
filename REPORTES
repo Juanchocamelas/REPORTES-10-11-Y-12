@@ -1,0 +1,371 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi(); 
+  ui.createMenu("CRUCE") 
+    .addItem("EjecutarTodo", "todoEjecutar")
+    .addItem("Abrir Instructivo", "abrirInstructivo") 
+    
+    .addSubMenu(ui.createMenu("DEBEN O NO") 
+      .addItem("TraerHojaFacturadores", "TraerLlaveFacturador")
+      .addItem("TraerHojaPila", "TraerPila")
+      .addItem("IngresarColumnasDeudores", "creacionColumnasHojaDeben")
+      .addItem("IdentificadoresDeudores", " Quienes_deben")
+      .addItem("Debido_Cobro", "Debido_Cobro")
+      .addItem("CruceFacturadores", "CruceFacturador")
+    )
+
+    
+    .addSubMenu(ui.createMenu("CRUCESREPORTE10")
+      .addItem("Creacion columnas", "creacionColumnasReporte11") 
+      .addItem("Crear_Tabla_Dinamica", "creacionColumnasReporte11")
+      .addItem("CRUCE CAPITALIZADORA", " CAPITALIZADORA10")
+      .addItem("CRUCE BOLIVAR", " CruceBolivar10")
+      .addItem("CRUCE COMERCIALIZADORA", "CruceComercializadora10")
+    )
+    
+    .addSubMenu(ui.createMenu("RESTA DIFERENCIA DE COMPAÑIAS")
+      .addItem("RESTA COMPAÑIA", "RESTA")
+
+    )
+    .addToUi(); 
+}
+
+
+
+ function todoEjecutar() {
+
+  TraerLlaveFacturador();
+  TraerPila();
+  creacionColumnasHojaDeben();
+  Quienes_deben();
+  Debido_Cobro ();
+  CruceFacturador();
+
+
+  creacionColumnasReporte11();
+  Tabla_Dinamica10();
+  CAPITALIZADORA10();
+  CruceBolivar10();
+  CruceComercializadora10();
+  
+
+
+  Tabla_Dinamica12();
+  CruceCapitalizadora12();
+  CruceBolivar12();
+  CruceComercializadora12();
+
+ 
+
+  Resta();
+
+ }
+
+function creacionColumnasHojaDeben() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaDeben = ss.getSheetByName("Debe o No Facturas") || ss.insertSheet("Debe o No Facturas");
+  
+  HojaDeben.getRange(1, 1).setValue("ClavesDeben");
+  HojaDeben.getRange(1, 2).setValue("NumeroIdentificacion")
+  HojaDeben.getRange(1, 3).setValue("FacturasPendientes")
+  HojaDeben.getRange(1, 4).setValue("debidoCobro")
+  HojaDeben.getRange(1, 5).setValue("Facturador o No")
+}
+
+function creacionColumnasReporte11() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+
+  HojaReporte11.getRange(1, 37).setValue("CAPITALIZADORA10")
+  HojaReporte11.getRange(1, 38).setValue("BOLIVAR10")
+  HojaReporte11.getRange(1, 39).setValue("COMERCIALES10")
+
+  HojaReporte11.getRange(1, 40).setValue("CAPITALIZADORA12")
+  HojaReporte11.getRange(1, 41).setValue("BOLIVAR 12")
+  HojaReporte11.getRange(1, 42).setValue("COMERCIALIZADORA12")
+
+  HojaReporte11.getRange(1, 43).setValue("DIFERENCIA CAPI")
+  HojaReporte11.getRange(1, 44).setValue("DIFERENCIA BOLIVAR")
+  HojaReporte11.getRange(1, 45).setValue("DIFERENCIA COMERCIALIZADORA")
+}
+
+
+function Quienes_deben() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL");
+  var HojaDeben = ss.getSheetByName("Debe o No Facturas");
+
+  var UltimaFilaDatos = HojaReporte11.getLastRow();
+  var claves = HojaReporte11.getRange("A2:A" + UltimaFilaDatos).getValues().flat();
+  var identificacion = HojaReporte11.getRange("G2:G" + UltimaFilaDatos).getValues().flat();
+  var estadosAH = HojaReporte11.getRange(2, 34, UltimaFilaDatos - 1, 1).getValues();
+  var estadosAI = HojaReporte11.getRange(2, 35, UltimaFilaDatos - 1, 1).getValues();
+
+  var datosFiltrados = [];
+  var identificacionesFiltradas = [];
+  
+
+  for (var i = 0; i < claves.length; i++) {
+    if (estadosAH[i][0] !== "N" && estadosAI[i][0] === "N") {
+      datosFiltrados.push([claves[i]]); 
+      identificacionesFiltradas.push([identificacion[i]]);
+    }
+  }
+    
+
+  if (datosFiltrados.length > 0) {
+    HojaDeben.getRange(2, 1, datosFiltrados.length, 1).setValues(datosFiltrados);
+    HojaDeben.getRange(2, 2, identificacionesFiltradas.length, 1).setValues(identificacionesFiltradas); 
+    HojaDeben.getRange(2, 3, datosFiltrados.length, 1).setValues(Array(datosFiltrados.length).fill(["S"]));
+
+    Logger.log("Se insertaron " + datosFiltrados.length + " registros en las columnas A y B de HojaDeben.");
+     }
+  }
+
+//COMPROBAR SI ESTO SIRVE
+  function Debido_Cobro () {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var Debe_o_No_Hoja = ss.getSheetByName("Debe o No Facturas")
+  
+  var ultimaFila = Debe_o_No_Hoja.getLastRow();
+
+  Debe_o_No_Hoja.getRange("D2:D" + ultimaFila).setFormula("=VLOOKUP(A2;'FACTURA/PILA PTE'!B:B; 1;0 )")
+
+  Logger.log("Se ha cruzado las llaves perfectamente")
+
+  }
+
+
+
+function TraerLlaveFacturador() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Lista Fact Voluntarios") || ss.insertSheet("Lista Fact Voluntarios");
+  sheet.getRange("A1").setFormula('=IMPORTRANGE("1tpJRPs17_fQLbgzGvAp4wfdqXk_auA0Z2xIQgRKXmjg"; "Copia de Lista Fact Voluntarios!C1:C18")');
+}
+
+function TraerPila() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("FACTURA/PILA PTE") || ss.insertSheet("FACTURA/PILA PTE");
+  sheet.getRange("A1").setFormula('=IMPORTRANGE("1hdrsJTu28RDXn9_BQ3RYpMEpbIWy8HGSunsXBACDvuE"; "FACTURA/PILA PTE!A:L")');
+}
+
+function CruceFacturador() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var Debe_o_No_Hoja = ss.getSheetByName("Debe o No Facturas")
+
+  var ultimaFila = Debe_o_No_Hoja.getLastRow();
+
+  Debe_o_No_Hoja.getRange("E2:E" + ultimaFila).setFormula("=VLOOKUP(B2;'Lista Fact Voluntarios'!A:A;1;0)")
+}
+
+function Tabla_Dinamica10() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hojaDatos = ss.getSheetByName("REPORTE10_DV");
+  var hojaDestino = ss.getSheetByName("Tabla_Dinamica10") || ss.insertSheet("Tabla_Dinamica10");
+
+  var rangoDatos = hojaDatos.getDataRange();
+  var rangoTabla = hojaDestino.getRange("A1");
+
+  var pivotTable = rangoTabla.createPivotTable(rangoDatos);
+
+  
+  pivotTable.addRowGroup(6); 
+
+
+  pivotTable.addColumnGroup(9); 
+
+  
+  pivotTable.addPivotValue(14, SpreadsheetApp.PivotTableSummarizeFunction.SUM);
+}
+
+
+function CAPITALIZADORA10() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL");
+  var tablaDinamica = ss.getSheetByName("Tabla_Dinamica10");
+
+  var ultimaFila = HojaReporte11.getLastRow();
+  var ultimaColumna = tablaDinamica.getLastColumn();
+  var datosTabla = tablaDinamica.getRange(1, 1, tablaDinamica.getLastRow(), ultimaColumna).getValues();
+
+ var tieneValor1 = datosTabla.length > 1 && datosTabla[1].includes(1);
+
+  if (tieneValor1) {
+    HojaReporte11.getRange("AK2:AK" + ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:B;2;FALSE)");
+  }
+}
+
+
+function CruceBolivar10 () {
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+  var tablaDinamica = ss.getSheetByName("Tabla_Dinamica10");
+  
+  var ultimaFila = HojaReporte11.getLastRow(); 
+   var ultimaColumna = tablaDinamica.getLastColumn();
+  var datosTabla = tablaDinamica.getRange(1, 1, tablaDinamica.getLastRow(), ultimaColumna).getValues();
+
+ var tieneValor1 = datosTabla.length > 1 && datosTabla[1].includes(1);
+
+  if (tieneValor1) {
+    HojaReporte11.getRange("AL2:AL" + ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:C;3;FALSE)");
+
+  }else{
+    HojaReporte11.getRange("AL2:AL" +  ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:B;2;FALSE)");
+  }
+}
+  
+  
+
+function CruceComercializadora10 () {
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+  var tablaDinamica = ss.getSheetByName("Tabla_Dinamica10")
+
+  var ultimaFila = HojaReporte11.getLastRow();
+  
+   var ultimaColumna = tablaDinamica.getLastColumn();
+  var datosTabla = tablaDinamica.getRange(1, 1, tablaDinamica.getLastRow(), ultimaColumna).getValues();
+
+ var tieneValor1 = datosTabla.length > 1 && datosTabla[1].includes(1);
+
+  if (tieneValor1) {
+    HojaReporte11.getRange("AM2:AM" + ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:C;4;FALSE)");
+
+  }else{
+    HojaReporte11.getRange("AM2:AM" +  ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:C;3;FALSE)");
+  }
+}
+
+
+  
+function Tabla_Dinamica12() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hojaDatos = ss.getSheetByName("REPORTE12_NOV_NEGOCIO");
+  var hojaDestino = ss.getSheetByName("Tabla_Dinamica12") || ss.insertSheet("Tabla_Dinamica12");
+
+  var rangoDatos = hojaDatos.getDataRange();
+  var rangoTabla = hojaDestino.getRange("A1");
+
+  var pivotTable = rangoTabla.createPivotTable(rangoDatos);
+
+ 
+  pivotTable.addRowGroup(2); 
+
+
+  pivotTable.addColumnGroup(6); 
+
+  pivotTable.addPivotValue(17, SpreadsheetApp.PivotTableSummarizeFunction.SUM);
+}
+
+function CruceCapitalizadora12() {
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+  var tablaDinamica = ss.getSheetByName("Tabla_Dinamica12")
+
+  var ultimaFila = HojaReporte11.getLastRow();
+  var ultimaColumna = tablaDinamica.getLastColumn();
+  var datosTabla = tablaDinamica.getRange(1, 1, tablaDinamica.getLastRow(), ultimaColumna).getValues();
+
+  var tieneValor1 = datosTabla.length > 1 && datosTabla[1].includes(1);
+
+     if (tieneValor1) {
+    HojaReporte11.getRange("AN2:AN" + ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica12!A:B;2;FALSE)");
+     }
+}
+
+function CruceBolivar12() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+  var tablaDinamica = ss.getSheetByName("Tabla_Dinamica12")
+
+  var ultimaFila = HojaReporte11.getLastRow();
+  var ultimaColumna = tablaDinamica.getLastColumn();
+  var datosTabla = tablaDinamica.getRange(1, 1, tablaDinamica.getLastRow(), ultimaColumna).getValues();
+
+ var tieneValor1 = datosTabla.length > 1 && datosTabla[1].includes(1);
+
+  if (tieneValor1) {
+    HojaReporte11.getRange("AO2:AO" + ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica12!A:C;3;FALSE)");
+
+  }else{
+    HojaReporte11.getRange("AO2:AO" +  ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica12!A:B;2;FALSE)");
+  }
+}
+  
+
+
+function CruceComercializadora12() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+  var tablaDinamica = ss.getSheetByName("Tabla_Dinamica12")
+
+  var ultimaFila = HojaReporte11.getLastRow();
+  var ultimaColumna = tablaDinamica.getLastColumn();
+  var datosTabla = tablaDinamica.getRange(1, 1, tablaDinamica.getLastRow(), ultimaColumna).getValues();
+
+ var tieneValor1 = datosTabla.length > 1 && datosTabla[1].includes(1);
+
+  if (tieneValor1) {
+    HojaReporte11.getRange("AP2:AP" + ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:C;4;FALSE)");
+
+  }else{
+    HojaReporte11.getRange("AP2:AP" +  ultimaFila).setFormula("=VLOOKUP(A2;Tabla_Dinamica10!A:C;3;FALSE)");
+  }
+}
+
+function Resta() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var HojaReporte11 = ss.getSheetByName("REPORTE11_FINAL")
+
+  var ultimaFila = HojaReporte11.getLastRow();
+
+  HojaReporte11.getRange("AQ2:AQ" + ultimaFila).setFormula("=(AK2-AN2)");
+  HojaReporte11.getRange("AR2:AR" + ultimaFila).setFormula("=(AL2-AO2)");
+  HojaReporte11.getRange("AS2:AS" + ultimaFila).setFormula("=(AM2-AP2)");
+
+  Logger.log("TODAS LAS RESTAS SE EJECUTARAON")
+
+}
+
+
+ function todoEjecutar() {
+
+  TraerLlaveFacturador();
+  TraerPila();
+  creacionColumnasHojaDeben();
+  Quienes_deben();
+  Debido_Cobro ();
+  CruceFacturador();
+
+
+  creacionColumnasReporte11();
+  Tabla_Dinamica10();
+  CAPITALIZADORA10();
+  CruceBolivar10();
+  CruceComercializadora10();
+  
+
+
+  Tabla_Dinamica12();
+  CruceCapitalizadora12();
+  CruceBolivar12();
+  CruceComercializadora12();
+
+ 
+
+  Resta();
+
+ }
+
+
+
+function abrirInstructivo() {
+    var url = "https://drive.google.com/file/d/1nOlnGRXOe6uqfMAPlbB-chPD-XaI5yNy/view?usp=drive_link"; 
+    var html = '<script>window.open("' + url + '", "_blank");google.script.host.close();</script>';
+    var ui = HtmlService.createHtmlOutput(html).setWidth(100).setHeight(50);
+    SpreadsheetApp.getUi().showModalDialog(ui, "Abriendo Instructivo...");
+}
+
